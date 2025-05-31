@@ -1,0 +1,12 @@
+{
+  "domain": "bosai_watch",
+  "name": "Bosai Watch",
+  "version": "1.0.0",
+  "documentation": "https://www.jma.go.jp/",
+  "requirements": ["aiohttp", "feedparser"],
+  "dependencies": [],
+  "codeowners": ["@your-github-username"],
+  "config_flow": true,
+  "icon": "icon.png",
+  "logo": "logo.png"
+}

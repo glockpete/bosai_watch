@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bosai Watch Configuration",
+        "description": "Configure your Bosai Watch integration",
+        "data": {
+          "area_code": "Area Code (JMA)"
+        }
+      }
+    },
+    "error": {
+      "invalid_area_code": "Invalid area code. Please enter a valid JMA area code."
+    }
+  },
+  "component": {
+    "bosai_watch": {
+      "title": "Bosai Watch",
+      "description": "Disaster monitoring integration for Japan"
+    }
+  }
+}
