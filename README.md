@@ -1,3 +1,5 @@
+<<<<< WORK IN PROGRESS >>>>>>
+
 # Bosai Watch Integration
 
 A comprehensive disaster and safety monitoring integration for Home Assistant, tailored for Japan. Bosai Watch aggregates real-time data from government, community, and open sources to provide advanced disaster, infrastructure, and environmental monitoring.
