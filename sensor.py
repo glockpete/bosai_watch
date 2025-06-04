@@ -1,56 +1,42 @@
 # Bosai Watch Sensor Integration - Ultimate Edition with Government APIs
 
-from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorDeviceClass,
-    SensorStateClass,
-)
-from homeassistant.const import (
-    PERCENTAGE,
-    UnitOfLength,
-    UnitOfMass,
-    UnitOfTemperature,
-    UnitOfTime,
-    EntityCategory,
-)
-from homeassistant.core import HomeAssistant
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.const import PERCENTAGE
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .const import DOMAIN, AREA_CODE
-import asyncio
 import aiohttp
 import logging
 import json
-import re
+from pathlib import Path
 from datetime import timedelta, datetime
-from urllib.parse import quote
-import hashlib
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+# Local data directory for offline samples
+DATA_DIR = Path(__file__).resolve().parent / "data"
 
 SCAN_INTERVAL = timedelta(seconds=180)  # 3 minutes for comprehensive monitoring
 
 # Comprehensive data source URLs
 DATA_SOURCES = {
     # Japanese Government APIs
-    "e_stat_api": "https://dashboard.e-stat.go.jp/api/1.0/Json/getData",
+    "e_stat_api": f"file://{DATA_DIR / 'population_sample.csv'}",
     "e_gov_data": "https://data.e-gov.go.jp/api/datasets",
     "cabinet_office": "https://www.cao.go.jp/api/",
     "mlit_transport": "https://api.odpt.org/api/v4/",
     
     # NHK RSS Feeds (Extended)
-    "nhk_main": "https://www3.nhk.or.jp/rss/news/cat0.xml",
-    "nhk_disaster": "https://www3.nhk.or.jp/rss/news/cat1.xml",
-    "nhk_politics": "https://www3.nhk.or.jp/rss/news/cat2.xml",
-    "nhk_economics": "https://www3.nhk.or.jp/rss/news/cat3.xml",
-    "nhk_international": "https://www3.nhk.or.jp/rss/news/cat4.xml",
-    "nhk_sports": "https://www3.nhk.or.jp/rss/news/cat5.xml",
-    "nhk_social": "https://www3.nhk.or.jp/rss/news/cat6.xml",
-    "nhk_science": "https://www3.nhk.or.jp/rss/news/cat7.xml",
+    "nhk_main": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_disaster": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_politics": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_economics": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_international": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_sports": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_social": f"file://{DATA_DIR / 'rss_sample.xml'}",
+    "nhk_science": f"file://{DATA_DIR / 'rss_sample.xml'}",
     
     # Weather and Disaster APIs
-    "jma_open_meteo": f"https://api.open-meteo.com/v1/jma?latitude=35.6762&longitude=139.6503&hourly=temperature_2m,precipitation,weather_code",
+    "jma_open_meteo": f"file://{DATA_DIR / 'weather_sample.json'}",
     "disaster_warnings": "http://agora.ex.nii.ac.jp/cps/weather/warning/",
     "sip4d_api": "https://www.sip4d.jp/api/",
     
@@ -78,6 +64,19 @@ DATA_SOURCES = {
     "tokyo_gas": "https://www.tokyo-gas.co.jp/api/",
     "tokyo_water": "https://www.waterworks.metro.tokyo.lg.jp/api/",
 }
+
+
+async def _get_content(session: aiohttp.ClientSession, url: str) -> tuple[int, str]:
+    """Fetch content from a URL or local file."""
+    if url.startswith("file://"):
+        path = url[7:]
+        try:
+            return 200, Path(path).read_text(encoding="utf-8")
+        except Exception as exc:
+            _LOGGER.error(f"Error reading {path}: {exc}")
+            return 500, ""
+    async with session.get(url, timeout=10) as response:
+        return response.status, await response.text()
 
 # Additional comprehensive data sources and sensors
 # Adding to the existing Bosai Watch sensor implementation
@@ -442,11 +441,10 @@ class ComprehensiveBosaiSensor(SensorEntity):
                 
                 # JMA Open-Meteo weather data (includes some seismic info)
                 try:
-                    async with session.get(DATA_SOURCES["jma_open_meteo"], timeout=10) as resp:
-                        if resp.status == 200:
-                            data = await resp.json()
-                            sources_data.append({"source": "JMA_OpenMeteo", "status": "active"})
-                except:
+                    status, _ = await _get_content(session, DATA_SOURCES["jma_open_meteo"])
+                    if status == 200:
+                        sources_data.append({"source": "JMA_OpenMeteo", "status": "active"})
+                except Exception:
                     pass
                 
                 # Calculate seismic activity level (simulated)
@@ -471,16 +469,13 @@ class ComprehensiveBosaiSensor(SensorEntity):
                 
                 # Check NHK disaster news asynchronously
                 try:
-                    async with session.get(DATA_SOURCES["nhk_disaster"], timeout=10) as response:
-                        if response.status == 200:
-                            rss_content = await response.text()
-                            # Simple RSS parsing without feedparser to avoid blocking
-                            disaster_keywords = ['地震', '津波', '台風', '洪水', '警報', '避難']
-                            
-                            for keyword in disaster_keywords:
-                                alert_level += rss_content.count(keyword)
-                            
-                            sources.append({"source": "NHK_Disaster", "alerts": alert_level})
+                    status, rss_content = await _get_content(session, DATA_SOURCES["nhk_disaster"])
+                    if status == 200:
+                        disaster_keywords = ['地震', '津波', '台風', '洪水', '警報', '避難']
+                        for keyword in disaster_keywords:
+                            alert_level += rss_content.count(keyword)
+
+                        sources.append({"source": "NHK_Disaster", "alerts": alert_level})
                 except Exception as e:
                     _LOGGER.warning(f"Failed to fetch NHK disaster RSS: {e}")
                 
@@ -513,27 +508,27 @@ class ComprehensiveBosaiSensor(SensorEntity):
                 
                 # Get JMA weather data
                 try:
-                    async with session.get(DATA_SOURCES["jma_open_meteo"], timeout=10) as resp:
-                        if resp.status == 200:
-                            data = await resp.json()
-                            hourly = data.get('hourly', {})
-                            
-                            # Check for severe weather conditions
-                            precipitation = hourly.get('precipitation', [])
-                            weather_codes = hourly.get('weather_code', [])
-                            
-                            # Simple emergency level calculation
-                            if precipitation and max(precipitation[:24]) > 50:  # Heavy rain
-                                emergency_level = "severe"
-                            elif precipitation and max(precipitation[:24]) > 20:
-                                emergency_level = "moderate"
-                            
-                            self._attributes.update({
-                                "max_precipitation": max(precipitation[:24]) if precipitation else 0,
-                                "weather_codes": weather_codes[:24] if weather_codes else [],
-                                "forecast_hours": 24
-                            })
-                except:
+                    status, content = await _get_content(session, DATA_SOURCES["jma_open_meteo"])
+                    if status == 200:
+                        data = json.loads(content)
+                        hourly = data.get('hourly', {})
+
+                        # Check for severe weather conditions
+                        precipitation = hourly.get('precipitation', [])
+                        weather_codes = hourly.get('weather_code', [])
+
+                        # Simple emergency level calculation
+                        if precipitation and max(precipitation[:24]) > 50:  # Heavy rain
+                            emergency_level = "severe"
+                        elif precipitation and max(precipitation[:24]) > 20:
+                            emergency_level = "moderate"
+
+                        self._attributes.update({
+                            "max_precipitation": max(precipitation[:24]) if precipitation else 0,
+                            "weather_codes": weather_codes[:24] if weather_codes else [],
+                            "forecast_hours": 24,
+                        })
+                except Exception:
                     pass
                 
                 self._state = emergency_level
@@ -590,12 +585,10 @@ class ComprehensiveBosaiSensor(SensorEntity):
             # Check for any infrastructure alerts from RSS feeds
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(DATA_SOURCES["nhk_main"], timeout=10) as response:
-                        if response.status == 200:
-                            rss_content = await response.text()
-                            # Check for infrastructure-related keywords
-                            if any(word in rss_content for word in ['停電', '断水', 'ガス', '通信障害']):
-                                infrastructure_status["overall_health"] -= 10
+                    status, rss_content = await _get_content(session, DATA_SOURCES["nhk_main"])
+                    if status == 200:
+                        if any(word in rss_content for word in ['停電', '断水', 'ガス', '通信障害']):
+                            infrastructure_status["overall_health"] -= 10
             except Exception as e:
                 _LOGGER.warning(f"Failed to fetch infrastructure RSS: {e}")
             
@@ -718,19 +711,17 @@ class ComprehensiveBosaiSensor(SensorEntity):
             # Check NHK politics feed for government responses
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(DATA_SOURCES["nhk_politics"], timeout=10) as response:
-                        if response.status == 200:
-                            rss_content = await response.text()
-                            # Count occurrences of government response keywords
-                            keywords = ['対策', '対応', '緊急', '災害']
-                            for keyword in keywords:
-                                response_level += rss_content.count(keyword)
-                            
-                            government_sources.append({
-                                "source": "NHK_Politics",
-                                "keywords_found": response_level,
-                                "status": "active"
-                            })
+                    status, rss_content = await _get_content(session, DATA_SOURCES["nhk_politics"])
+                    if status == 200:
+                        keywords = ['対策', '対応', '緊急', '災害']
+                        for keyword in keywords:
+                            response_level += rss_content.count(keyword)
+
+                        government_sources.append({
+                            "source": "NHK_Politics",
+                            "keywords_found": response_level,
+                            "status": "active"
+                        })
             except Exception as e:
                 _LOGGER.warning(f"Failed to fetch politics RSS: {e}")
             
@@ -824,20 +815,18 @@ class DataAggregatorSensor(SensorEntity):
             async with aiohttp.ClientSession() as session:
                 for source_name, url in news_sources:
                     try:
-                        async with session.get(url, timeout=10) as response:
-                            if response.status == 200:
-                                rss_content = await response.text()
-                                # Simple counting of items in RSS feed
-                                articles_count = rss_content.count('<item>')
-                                if articles_count == 0:
-                                    articles_count = rss_content.count('<entry>')  # Atom feeds
-                                
-                                total_articles += articles_count
-                                active_sources.append({
-                                    "source": source_name,
-                                    "articles": articles_count,
-                                    "status": "active"
-                                })
+                        status, rss_content = await _get_content(session, url)
+                        if status == 200:
+                            articles_count = rss_content.count('<item>')
+                            if articles_count == 0:
+                                articles_count = rss_content.count('<entry>')  # Atom feeds
+
+                            total_articles += articles_count
+                            active_sources.append({
+                                "source": source_name,
+                                "articles": articles_count,
+                                "status": "active"
+                            })
                     except Exception as e:
                         _LOGGER.warning(f"Failed to fetch {source_name} RSS: {e}")
                         continue
@@ -980,12 +969,12 @@ class EnhancedDataSource:
         
         try:
             session = await self.get_session()
-            async with session.get(url, timeout=10) as response:
-                if response.status == 200:
-                    if 'json' in response.content_type:
-                        data = await response.json()
-                    else:
-                        data = {"text": await response.text()}
+            status, text = await _get_content(session, url)
+            if status == 200:
+                if url.endswith('.json'):
+                    data = json.loads(text)
+                else:
+                    data = {"text": text}
                     
                     if cache_key:
                         self.cache[cache_key] = (data, datetime.now().timestamp())
@@ -1441,21 +1430,21 @@ class SafecastRadiationSensor(SensorEntity):
         url = f"https://api.safecast.org/measurements.json?latitude={self._latitude}&longitude={self._longitude}&distance=10&unit=usvph&order=desc&sort=measured_at&limit=1"
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=10) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        if data and isinstance(data, list) and len(data) > 0:
-                            reading = data[0]
-                            self._state = reading.get("value")
-                            self._attributes["measurement_time"] = reading.get("measured_at")
-                            self._attributes["device_id"] = reading.get("device_id")
-                            self._attributes["location_name"] = reading.get("location_name")
-                            self._attributes["latitude"] = reading.get("latitude")
-                            self._attributes["longitude"] = reading.get("longitude")
-                        else:
-                            self._state = None
+                status, text = await _get_content(session, url)
+                if status == 200:
+                    data = json.loads(text)
+                    if isinstance(data, list) and data:
+                        reading = data[0]
+                        self._state = reading.get("value")
+                        self._attributes["measurement_time"] = reading.get("measured_at")
+                        self._attributes["device_id"] = reading.get("device_id")
+                        self._attributes["location_name"] = reading.get("location_name")
+                        self._attributes["latitude"] = reading.get("latitude")
+                        self._attributes["longitude"] = reading.get("longitude")
                     else:
                         self._state = None
+                else:
+                    self._state = None
         except Exception as e:
             _LOGGER.error(f"Error fetching Safecast radiation data: {e}")
             self._state = None
