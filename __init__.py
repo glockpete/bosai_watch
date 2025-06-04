@@ -1,7 +1,6 @@
 # Bosai Watch init
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import ConfigType
 
 DOMAIN = 'bosai_watch'
 
