@@ -1,7 +1,8 @@
 # Bosai Watch init
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import ConfigType
+
+from .secrets import load_secrets
 
 DOMAIN = 'bosai_watch'
 
@@ -9,6 +10,8 @@ PLATFORMS = ["sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Bosai Watch from a config entry."""
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN]["secrets"] = load_secrets(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

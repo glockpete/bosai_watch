@@ -1,6 +1,5 @@
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_NAME
 from .const import DOMAIN, AREA_CODE
 
 CONF_AREA_CODE = "area_code"

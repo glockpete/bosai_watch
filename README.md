@@ -62,6 +62,19 @@ A comprehensive disaster and safety monitoring integration for Home Assistant, t
 2. Restart Home Assistant.
 3. Add the Bosai Watch integration via the UI or YAML.
 
+### Secrets File
+Create ``bosai_watch_secrets.yaml`` in your Home Assistant configuration
+directory to store API keys or passwords.  Each key can then be retrieved
+automatically by the integration.  Example:
+
+```yaml
+twitter_bearer_token: YOUR_TOKEN
+tokyo_metro_key: YOUR_KEY
+```
+
+Restart Home Assistant after creating or updating the file so the secrets are
+reloaded.
+
 ### Example Dashboard Cards
 
 #### Disaster Overview
