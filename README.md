@@ -1,6 +1,6 @@
-<<<<< WORK IN PROGRESS >>>>>>
+# Bosai Watch Integration for Home Assistant
+This repository contains the Bosai Watch integration, ready for installation via [HACS](https://hacs.xyz/).
 
-# Bosai Watch Integration
 
 A comprehensive disaster and safety monitoring integration for Home Assistant, tailored for Japan. Bosai Watch aggregates real-time data from government, community, and open sources to provide advanced disaster, infrastructure, and environmental monitoring.
 
@@ -58,9 +58,29 @@ A comprehensive disaster and safety monitoring integration for Home Assistant, t
 ## 🏠 Home Assistant Integration
 
 ### Installation
-1. Copy the `bosai_watch` folder to your Home Assistant `custom_components` directory.
-2. Restart Home Assistant.
-3. Add the Bosai Watch integration via the UI or YAML.
+#### Via HACS
+1. In Home Assistant, open **HACS → Integrations** and add this repository as a
+   custom repository (category: Integration).
+2. Search for **"Bosai Watch"** in HACS and install it.
+3. Restart Home Assistant and add the integration through the UI.
+
+#### Manual
+1. Copy the `custom_components/bosai_watch` folder to your Home Assistant
+   `custom_components` directory.
+2. Restart Home Assistant and add the integration via the UI or YAML.
+
+### Secrets File
+Create ``bosai_watch_secrets.yaml`` in your Home Assistant configuration
+directory to store API keys or passwords.  Each key can then be retrieved
+automatically by the integration.  Example:
+
+```yaml
+twitter_bearer_token: YOUR_TOKEN
+tokyo_metro_key: YOUR_KEY
+```
+
+Restart Home Assistant after creating or updating the file so the secrets are
+reloaded.
 
 ### Example Dashboard Cards
 
@@ -106,3 +126,6 @@ A comprehensive disaster and safety monitoring integration for Home Assistant, t
 
 - Data sources: JMA, Safecast, Japanese Government, Social APIs, Community Reports
 - Integration by the Bosai Watch Team
+
+## License
+This project is licensed under the [MIT License](LICENSE).

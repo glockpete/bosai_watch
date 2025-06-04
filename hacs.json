@@ -1,0 +1,8 @@
+{
+  "name": "Bosai Watch",
+  "content_in_root": false,
+  "domain": "bosai_watch",
+  "homeassistant": "2024.1.0",
+  "render_readme": true,
+  "zip_release": true
+}
