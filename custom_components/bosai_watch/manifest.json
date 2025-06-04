@@ -2,11 +2,17 @@
   "domain": "bosai_watch",
   "name": "Bosai Watch",
   "version": "1.0.0",
-  "documentation": "https://www.jma.go.jp/",
-  "requirements": ["aiohttp", "feedparser"],
+  "documentation": "https://github.com/your-github-username/bosai_watch",
+  "requirements": [
+    "aiohttp",
+    "feedparser"
+  ],
   "dependencies": [],
-  "codeowners": ["@your-github-username"],
+  "codeowners": [
+    "@your-github-username"
+  ],
   "config_flow": true,
   "icon": "icon.png",
-  "logo": "logo.png"
+  "logo": "logo.png",
+  "issue_tracker": "https://github.com/your-github-username/bosai_watch/issues"
 }

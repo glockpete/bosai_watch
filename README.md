@@ -1,6 +1,6 @@
-<<<<< WORK IN PROGRESS >>>>>>
+# Bosai Watch Integration for Home Assistant
+This repository contains the Bosai Watch integration, ready for installation via [HACS](https://hacs.xyz/).
 
-# Bosai Watch Integration
 
 A comprehensive disaster and safety monitoring integration for Home Assistant, tailored for Japan. Bosai Watch aggregates real-time data from government, community, and open sources to provide advanced disaster, infrastructure, and environmental monitoring.
 
@@ -126,3 +126,6 @@ reloaded.
 
 - Data sources: JMA, Safecast, Japanese Government, Social APIs, Community Reports
 - Integration by the Bosai Watch Team
+
+## License
+This project is licensed under the [MIT License](LICENSE).
