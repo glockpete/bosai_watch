@@ -58,9 +58,16 @@ A comprehensive disaster and safety monitoring integration for Home Assistant, t
 ## 🏠 Home Assistant Integration
 
 ### Installation
-1. Copy the `bosai_watch` folder to your Home Assistant `custom_components` directory.
-2. Restart Home Assistant.
-3. Add the Bosai Watch integration via the UI or YAML.
+#### Via HACS
+1. In Home Assistant, open **HACS → Integrations** and add this repository as a
+   custom repository (category: Integration).
+2. Search for **"Bosai Watch"** in HACS and install it.
+3. Restart Home Assistant and add the integration through the UI.
+
+#### Manual
+1. Copy the `custom_components/bosai_watch` folder to your Home Assistant
+   `custom_components` directory.
+2. Restart Home Assistant and add the integration via the UI or YAML.
 
 ### Secrets File
 Create ``bosai_watch_secrets.yaml`` in your Home Assistant configuration
